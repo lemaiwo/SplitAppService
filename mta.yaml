@@ -1,0 +1,127 @@
+_schema-version: "3.1"
+ID: SplitAppService
+description: A simple CAP project.
+version: 1.0.0
+modules:
+  - name: SplitAppService-srv
+    type: nodejs
+    path: gen/srv
+    requires:
+      - name: SplitAppService-db-service
+      - name: uaa_SplitAppService
+    provides:
+      - name: srv-api
+        public: true
+        properties:
+          srv-url: ${default-url}
+  - name: SplitAppService-db
+    type: hdb
+    path: gen/db
+    requires:
+      - name: SplitAppService-db-service
+    parameters:
+      disk-quota: 256M
+      memory: 256M
+  - name: SplitAppService-destination-content
+    type: com.sap.application.content
+    requires:
+      - name: SplitAppService-destination-service
+        parameters:
+          content-target: true
+      - name: SplitAppService_html_repo_host
+        parameters:
+          service-key:
+            name: SplitAppService_html_repo_host-key
+      - name: uaa_SplitAppService
+        parameters:
+          service-key:
+            name: uaa_SplitAppService-key
+    parameters:
+      content:
+        instance:
+          destinations:
+            - Name: be_wl_splitapp_SplitAppService_html_repo_host
+              ServiceInstanceName: SplitAppService-html5-app-host-service
+              ServiceKeyName: SplitAppService_html_repo_host-key
+              sap.cloud.service: be.wl.splitapp
+            - Authentication: OAuth2UserTokenExchange
+              Name: be_wl_splitapp_uaa_SplitAppService
+              ServiceInstanceName: SplitAppService-xsuaa-service
+              ServiceKeyName: uaa_SplitAppService-key
+              sap.cloud.service: be.wl.splitapp
+          existing_destinations_policy: ignore
+    build-parameters:
+      no-source: true
+  - name: SplitAppService_ui_deployer
+    type: com.sap.application.content
+    path: app
+    requires:
+      - name: SplitAppService_html_repo_host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - HTML5Module-content.zip
+          name: HTML5Module
+          target-path: resources/
+  - name: HTML5Module
+    type: html5
+    path: app/HTML5Module
+    build-parameters:
+      builder: custom
+      commands:
+        - npm run build
+      supported-platforms: []
+      build-result: dist
+resources:
+  - name: SplitAppService-db-service
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hanatrial
+      service-plan: hdi-shared
+    properties:
+      hdi-service-name: ${service-name}
+  - name: SplitAppService-destination-service
+    type: org.cloudfoundry.managed-service
+    parameters:
+      config:
+        HTML5Runtime_enabled: true
+        init_data:
+          instance:
+            destinations:
+              - Authentication: NoAuthentication
+                HTML5.ForwardAuthToken: true
+                Name: SplitAppService-srv-api
+                ProxyType: Internet
+                Type: HTTP
+                URL: ~{srv-api/srv-url}
+            existing_destinations_policy: ignore
+        version: 1.0.0
+      service: destination
+      service-name: SplitAppService-destination-service
+      service-plan: lite
+    requires:
+      - name: srv-api
+  - name: SplitAppService_html_repo_host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-name: SplitAppService-html5-app-host-service
+      service-plan: app-host
+  - name: uaa_SplitAppService
+    type: org.cloudfoundry.managed-service
+    parameters:
+      path: ./xs-security.json
+      service: xsuaa
+      service-name: SplitAppService-xsuaa-service
+      service-plan: application
+parameters:
+  deploy_mode: html5-repo
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm install --production
+        - npx -p @sap/cds-dk cds build --production

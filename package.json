@@ -1,0 +1,52 @@
+{
+  "name": "SplitAppService",
+  "version": "1.0.0",
+  "description": "A simple CAP project.",
+  "repository": "<Add your repository here>",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@sap/audit-logging": "^4.1.0",
+    "@sap/cds": "^4",
+    "@sap/cds-odata-v2-adapter-proxy": "^1.5.6",
+    "@sap/hana-client": "^2.6.61",
+    "@sap/xsenv": "^3.1.0",
+    "@sap/xssec": "^3.1.1",
+    "express": "^4",
+    "passport": "^0.4.1"
+  },
+  "devDependencies": {
+    "@sap/approuter": "9.0.x",
+    "@sap/eslint-plugin-ui5-jsdocs": "2.0.x",
+    "@sap/html5-repo-mock": "2.0.x",
+    "@sap/ui5-builder-webide-extension": "1.0.x",
+    "@sap/ux-specification": "^1.84.2",
+    "@sapui5/ts-types": "1.71.x",
+    "@ui5/cli": "2.2.6",
+    "bestzip": "2.1.4",
+    "eslint": "5.16.x",
+    "rimraf": "3.0.2",
+    "sqlite3": "^5.0.0"
+  },
+  "scripts": {
+    "start": "cds run"
+  },
+  "ui5": {
+    "dependencies": [
+      "@sap/ui5-builder-webide-extension"
+    ]
+  },
+  "cds": {
+    "requires": {
+      "db": {
+        "kind": "sql"
+      },
+      "uaa": {
+        "kind": "xsuaa"
+      }
+    }
+  },
+  "sapux": [
+    "app/splitapp-ui"
+  ]
+}
